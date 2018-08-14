@@ -1,0 +1,149 @@
+<head>
+    <title>Pen tracker app</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6 text-center">
+                <h1>Draw the displayed symbol on the canvas below</h1>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 text-center">
+                <p id="digit"></p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 text-center">
+                <canvas id="canvas" width="555" height="300"></canvas>
+            </div>
+        </div>
+        <div class="row top-buffer">
+            <div class="col-md-3 text-center">
+                <button id="doneBtn" class="btn btn-default">Done</button>
+            </div>
+            <div class="col-md-3 text-center">
+                <button id="clearBtn" class="btn">Clear</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        #canvas {
+            border: 1px solid #000000;
+            width: 100%;
+            height: auto;
+        }
+
+        #digit {
+            font-size: xx-large;
+        }
+
+        .top-buffer { margin-top:20px; }
+    </style>
+
+    <script>
+        canvas = document.getElementById('canvas')
+        context = canvas.getContext("2d");
+        rect = canvas.getBoundingClientRect()
+
+        function mouseDownHandler(e) {
+            var mouseX = e.clientX - rect.left;
+            var mouseY = e.clientY - rect.top;
+            paint = true;
+
+            addClick(mouseX, mouseY);
+            redraw();
+        }
+
+        function mouseMoveHandler(e) {
+            if (paint) {
+                var mouseX = e.clientX - rect.left;
+                var mouseY = e.clientY - rect.top;
+                
+                addClick(mouseX, mouseY, true);
+                redraw();
+            }
+        }
+
+        function mouseUpHandler(e){
+            paint = false;
+        }
+
+        function pickDigit() {
+            min = 0;
+            max = 9;
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        var digit;
+        var clickX = new Array();
+        var clickY = new Array();
+        var clickDrag = new Array();
+        var paint;
+
+        function addClick(x, y, dragging)
+        {
+            clickX.push(x);
+            clickY.push(y);
+            clickDrag.push(dragging);
+        }
+
+        function redraw() {
+            context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+            
+            context.strokeStyle = "#df4b26";
+            context.lineJoin = "round";
+            context.lineWidth = 5;
+                        
+            for (var i = 0; i < clickX.length; i++) {
+                context.beginPath();
+                if (clickDrag[i] && i) {
+                    context.moveTo(clickX[i-1], clickY[i-1]);
+                } else {
+                    context.moveTo(clickX[i]-1, clickY[i]);
+                }
+                context.lineTo(clickX[i], clickY[i]);
+                context.closePath();
+                context.stroke();
+            }
+        }
+
+        function clearClickHandler() {
+            clickX = new Array();
+            clickY = new Array();
+            clickDrag = new Array();
+            digit = pickDigit();
+
+            document.getElementById("digit").innerHTML = digit;
+            redraw();
+        }
+
+        function doneClickHandler() {
+            var xhr = new XMLHttpRequest();
+            var url = "example.com";
+            xhr.open("POST", url, true);
+            xhr.setRequestHeader("Content-Type", "application/json");
+            var data = JSON.stringify({"digit": digit, "x": clickX, "y": clickY});
+            xhr.send(data);
+
+            clearClickHandler();
+            pickDigit();
+        }
+
+        canvas.addEventListener("mousedown", mouseDownHandler, false)
+        canvas.addEventListener("mousemove", mouseMoveHandler, false)
+        canvas.addEventListener("mouseup", mouseUpHandler, false)
+
+        canvas.addEventListener("touchstart", mouseDownHandler, false)
+        canvas.addEventListener("touchmove", mouseMoveHandler, false)
+        canvas.addEventListener("touchend", mouseUpHandler, false)
+
+        document.getElementById("clearBtn").addEventListener("click", clearClickHandler)
+        document.getElementById("doneBtn").addEventListener("click", doneClickHandler)
+
+        clearClickHandler();
+    </script>
+</body>
